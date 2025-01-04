@@ -79,16 +79,15 @@ productsRoutes.delete('/:pid', async (req, res)=>{
 
 productsRoutes.post('/', async (req, res)=>{
 
-    
     const product = req.body
+    const products = await getProducts()
     product.id = Math.floor(Math.random() * 10000)
-
+    product.status = true
 
     if (!product.title || !product.description || !product.code || !product.price || !product.status || !product.stock || !product.category) {
         return res.status(400).send({status: 'error', message: 'Product incomplete'})
     }
 
-    const products = await getProducts()
     products.push(product)
 
     const isOk = await saveProducts(products)
