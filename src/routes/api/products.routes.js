@@ -1,35 +1,18 @@
 import { Router } from "express";
-import fs from 'fs';
+import { getProducts, getProductById, saveProducts } from "../../services/products/productService.js";
+import {uploader} from "../../utils/multer.js";
 
 const productsRoutes = Router()
 
-const getProducts = async () => {
+const verifyProduct = (req, res, next) =>{
+    const product = req.body
 
-    try {
-        const products = await fs.promises.readFile('src/db/products.json', 'utf-8')
-        const productsConverted = JSON.parse(products)
-        return productsConverted
-    } catch (error) {
-        return [];
+    if (!product.title || !product.description || !product.code || !product.price || !product.stock || !product.category) {
+        return res.status(400).send({status: 'error', message: 'Product incomplete'})
     }
+    next()
 }
 
-const getProductById = async (pId) => {
-    const products = await getProducts();
-    const product = products.find( p => p.id === pId)
-    return product
-}
-
-const saveProducts = async (products) => {
-
-    try {
-        const productsConverted = JSON.stringify(products)
-        await fs.promises.writeFile('src/db/products.json', productsConverted, 'utf-8')
-        return true
-    } catch (error) {
-        return false;
-    }
-}
 
 productsRoutes.get('/', async (req, res)=>{
 
@@ -44,6 +27,7 @@ productsRoutes.get('/', async (req, res)=>{
     res.send({products: productsLimited})
 })
 
+
 productsRoutes.get('/:pid', async (req, res)=>{
 
     const pId = +req.params.pid;
@@ -55,6 +39,7 @@ productsRoutes.get('/:pid', async (req, res)=>{
 
     res.send({product})
 })
+
 
 productsRoutes.delete('/:pid', async (req, res)=>{
 
@@ -76,19 +61,19 @@ productsRoutes.delete('/:pid', async (req, res)=>{
 })
 
 
+productsRoutes.post('/',uploader.array('file'), verifyProduct, async (req, res)=>{
 
-productsRoutes.post('/', async (req, res)=>{
 
     const product = req.body
+    const path = req.files.map(f=>f.path)
     const products = await getProducts()
     product.id = Math.floor(Math.random() * 10000)
     product.status = true
 
-    if (!product.title || !product.description || !product.code || !product.price || !product.status || !product.stock || !product.category) {
-        return res.status(400).send({status: 'error', message: 'Product incomplete'})
-    }
+    product.price = parseInt(product.price)
+    product.stock = parseInt(product.stock)
 
-    products.push(product)
+    products.push({...product, thumbnails: path})
 
     const isOk = await saveProducts(products)
 
@@ -99,7 +84,8 @@ productsRoutes.post('/', async (req, res)=>{
     res.send({status: 'ok', message: 'Product added'})
 })
 
-productsRoutes.put('/:pid', async (req, res)=>{
+
+productsRoutes.put('/:pid', verifyProduct, async (req, res)=>{
 
     const pId = +req.params.pid;
     const product = getProductById(pId)
@@ -108,11 +94,6 @@ productsRoutes.put('/:pid', async (req, res)=>{
 
     if (!product) {
         return res.status(404).send({status: 'Error', message: 'Product not found'})
-    }
-
-
-    if (!productToUpdate.title || !productToUpdate.description || !productToUpdate.code || !productToUpdate.price || !productToUpdate.status || !productToUpdate.stock || !productToUpdate.category) {
-        return res.status(400).send({status: 'error', message: 'Product incomplete'})
     }
 
     const updateProducts = products.map(p=>{

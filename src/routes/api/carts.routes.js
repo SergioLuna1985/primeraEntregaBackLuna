@@ -1,6 +1,5 @@
 import { Router } from "express";
 import fs from 'fs';
-import { send } from "process";
 
 const cartRoutes = Router()
 
@@ -92,16 +91,11 @@ cartRoutes.post('/:cid/product/:pid', async (req, res)=>{
         cart.products.push({id: pId, quantity: quantity})
    }
 
-   const updateCarts = carts.map(c=>{
-    if (c.id===cId) {
-        return {
-            ...cart
-        }
-    }
-    return c
-   })
+   const indexCart = carts.findIndex(c=>c.id===cId)
 
-   const isOk = await saveCarts(updateCarts)
+   carts[indexCart] = { ...cart }
+
+   const isOk = await saveCarts(carts)
 
    if (!isOk) {
         return res.send({status: 'error', message: 'Product could not add'})
