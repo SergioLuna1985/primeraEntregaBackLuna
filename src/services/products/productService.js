@@ -1,7 +1,47 @@
-import fs from "fs";
-
+/* import fs from "fs"; */
+import { ProductModel } from "../../models/product.model.js";
 
 const getProducts = async () => {
+    try {
+        return await ProductModel.find().lean()
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+const getProductById = async (pId) => {
+    try {
+        return await ProductModel.findById(pId).lean()  
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+const saveProduct = async (product) => {   
+    try {
+        await ProductModel.create(product)
+    } catch (error) {
+        console.log('error al intentar guardar el/los productos', error)
+    }
+}
+
+const deleteProduct = async (pId) => { 
+    try {
+        return await ProductModel.findByIdAndDelete(pId)
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+export { getProducts, getProductById, saveProduct, deleteProduct }
+
+
+
+
+
+
+/* const getProducts = async () => {
     try {
         const products = await fs.promises.readFile('src/db/products.json', 'utf-8')
         const productsConverted = JSON.parse(products)
@@ -28,4 +68,4 @@ const saveProducts = async (products) => {
     }
 }
 
-export { getProducts, getProductById, saveProducts }
+export { getProducts, getProductById, saveProducts } */

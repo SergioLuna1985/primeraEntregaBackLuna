@@ -1,15 +1,12 @@
 import express from "express"
-import productsRoutes from "./routes/api/products.routes.js"
-import cartRoutes from "./routes/api/carts.routes.js"
 import handlebars from 'express-handlebars'
-import viewRouter from "./routes/views.routes.js"
-import usersRouters from "./routes/api/users.routes.js"
 import {Server} from 'socket.io'
-
+import routerApp from "./routes/index.js"
+import socketMiddleware from "./utils/socketMiddleware.js"
+import { connectDB } from "./db/mongoDB/index.js"
 
 const PORT = 8080
 const app = express()
-
 
 app.use(express.static('public'))
 app.use(express.json())
@@ -22,19 +19,14 @@ const httpServer = app.listen(PORT, ()=>{
     console.log(`Escuchando en ${PORT}`)
 })
 
-const io = new Server(httpServer)
+connectDB()
 
-const socketMiddleware = (io) => (req, res, next) =>{
-    req.io = io
-    next()
-}
+const io = new Server(httpServer)
 
 app.use(socketMiddleware(io))
 
-app.use('/', viewRouter)
-app.use("/api/products", productsRoutes)
-app.use("/api/carts", cartRoutes)
-app.use('/api/users', usersRouters)
+app.use(routerApp)
+
 
 
 

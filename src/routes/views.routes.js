@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { getProducts, saveProducts } from "../services/products/productService.js"    
-
+import { getProducts, saveProduct } from "../services/products/productService.js"    
 
 const viewRouter = Router()
 
@@ -11,7 +10,7 @@ viewRouter.get('/', async (req, res)=>{
 
     const haveProducts = products.length > 0 ? true : false
 
-    res.render('home', {title: "Productos", haveProducts, products})
+    res.render('home', {titlePag: "Productos", haveProducts, products})
 })
 
 
@@ -27,15 +26,14 @@ viewRouter.get('/realtimeproducts', async (req, res) =>{
         socket.emit('products', products)
         socket.on('newProduct', async data =>{
 
-            products.push(data)
-
-            const isOk = await saveProducts(products)
-            
-            if (!isOk) {
-                console.log("Error al guardar el producto")
+            try {
+                await saveProduct(data)
+                
+            } catch (error) {
+                console.log(error)
             }
 
-            io.emit('products', products)
+            io.emit('products', await getProducts())
         })
     
         
